@@ -1,0 +1,213 @@
+<div class="space-y-6 fade-in">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-900">Budgets</h2>
+      <p class="text-sm text-gray-500 mt-0.5">Manage your monthly budget limits</p>
+    </div>
+    <button
+      (click)="openCreate()"
+      class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+    >
+      + New Budget
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex gap-3 items-center">
+    <select
+      [value]="filterMonth()"
+      (change)="filterMonth.set(+$any($event.target).value); loadBudgets()"
+      class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      @for (m of months; track $index) {
+        <option [value]="$index + 1">{{ m }}</option>
+      }
+    </select>
+    <input
+      type="number"
+      [value]="filterYear()"
+      (change)="filterYear.set(+$any($event.target).value); loadBudgets()"
+      min="2000"
+      max="2100"
+      class="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+  </div>
+
+  <!-- Budget List -->
+  @if (loading()) {
+    <app-spinner />
+  } @else if (budgets().length === 0) {
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
+      <p class="text-4xl mb-3">💰</p>
+      <p class="text-gray-600 font-medium">
+        No budgets for {{ months[filterMonth() - 1] }} {{ filterYear() }}
+      </p>
+      <button (click)="openCreate()" class="mt-4 text-sm text-blue-600 hover:underline">
+        Create one →
+      </button>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      @for (b of budgets(); track b.id) {
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3">
+          <div class="flex items-start justify-between">
+            <div>
+              <span class="text-lg">{{ b.category.icon }}</span>
+              <h3 class="font-semibold text-gray-900 mt-1">{{ b.name }}</h3>
+              <p class="text-xs text-gray-500">{{ b.category.name }}</p>
+            </div>
+            <div class="flex gap-2">
+              <button
+                (click)="openEdit(b)"
+                class="text-gray-400 hover:text-blue-600 text-sm transition-colors"
+              >
+                ✏️
+              </button>
+              <button
+                (click)="delete(b.id)"
+                class="text-gray-400 hover:text-red-600 text-sm transition-colors"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-sm mb-1.5">
+              <span class="text-gray-600">{{ b.totalSpent | currency }} spent</span>
+              <span class="text-gray-500">/ {{ b.monthlyLimit | currency }}</span>
+            </div>
+            <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all"
+                [class.bg-green-500]="budgetPercent(b) <= 70"
+                [class.bg-yellow-500]="budgetPercent(b) > 70 && budgetPercent(b) <= 90"
+                [class.bg-red-500]="budgetPercent(b) > 90"
+                [style.width.%]="budgetPercent(b)"
+              ></div>
+            </div>
+            <div class="flex justify-between text-xs mt-1.5">
+              <span
+                [class.text-green-600]="b.remaining >= 0"
+                [class.text-red-600]="b.remaining < 0"
+                class="font-medium"
+              >
+                {{ b.remaining | currency }} left
+              </span>
+              <span class="text-gray-400">{{ budgetPercent(b) }}%</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modal Form -->
+@if (showForm()) {
+  <div
+    class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
+    (click)="showForm.set(false)"
+  >
+    <div
+      class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 fade-in"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-lg font-bold text-gray-900">
+          {{ editingId() ? 'Edit Budget' : 'New Budget' }}
+        </h3>
+        <button (click)="showForm.set(false)" class="text-gray-400 hover:text-gray-600 text-xl">
+          ✕
+        </button>
+      </div>
+
+      <app-alert [message]="formError()" />
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="space-y-4 mt-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Budget Name</label>
+          <input
+            type="text"
+            formControlName="name"
+            placeholder="e.g. Monthly Food"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <select
+            formControlName="categoryId"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            [class.border-red-400]="
+              form.controls.categoryId.invalid && form.controls.categoryId.touched
+            "
+          >
+            <option value="">Select category...</option>
+            @for (c of categories(); track c.id) {
+              <option [value]="c.id">{{ c.icon }} {{ c.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Limit ($)</label>
+          <input
+            type="number"
+            formControlName="monthlyLimit"
+            placeholder="500"
+            min="1"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            [class.border-red-400]="
+              form.controls.monthlyLimit.invalid && form.controls.monthlyLimit.touched
+            "
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Month</label>
+            <select
+              formControlName="month"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              @for (m of months; track $index) {
+                <option [value]="$index + 1">{{ m }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Year</label>
+            <input
+              type="number"
+              formControlName="year"
+              min="2000"
+              max="2100"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button
+            type="button"
+            (click)="showForm.set(false)"
+            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            [disabled]="saving()"
+            class="flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+          >
+            {{ saving() ? 'Saving...' : editingId() ? 'Update' : 'Create' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

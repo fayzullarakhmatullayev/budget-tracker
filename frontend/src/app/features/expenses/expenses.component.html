@@ -1,0 +1,236 @@
+<div class="space-y-6 fade-in">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-900">Expenses</h2>
+      <p class="text-sm text-gray-500 mt-0.5">Track your spending</p>
+    </div>
+    <button
+      (click)="openCreate()"
+      class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+    >
+      + Add Expense
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="flex flex-wrap gap-3 items-center">
+    <select
+      [value]="filterMonth()"
+      (change)="filterMonth.set(+$any($event.target).value); applyFilters()"
+      class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      @for (m of months; track $index) {
+        <option [value]="$index + 1">{{ m }}</option>
+      }
+    </select>
+    <input
+      type="number"
+      [value]="filterYear()"
+      (change)="filterYear.set(+$any($event.target).value); applyFilters()"
+      min="2000"
+      max="2100"
+      class="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+    <select
+      [value]="filterCategory()"
+      (change)="filterCategory.set($any($event.target).value); applyFilters()"
+      class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+      <option value="">All Categories</option>
+      @for (c of categories(); track c.id) {
+        <option [value]="c.id">{{ c.icon }} {{ c.name }}</option>
+      }
+    </select>
+  </div>
+
+  <!-- Table -->
+  @if (loading()) {
+    <app-spinner />
+  } @else if (expenses().length === 0) {
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
+      <p class="text-4xl mb-3">💸</p>
+      <p class="text-gray-600 font-medium">No expenses found</p>
+      <button (click)="openCreate()" class="mt-4 text-sm text-blue-600 hover:underline">
+        Add your first expense →
+      </button>
+    </div>
+  } @else {
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="text-left px-5 py-3 font-medium text-gray-500">Date</th>
+            <th class="text-left px-5 py-3 font-medium text-gray-500">Description</th>
+            <th class="text-left px-5 py-3 font-medium text-gray-500">Category</th>
+            <th class="text-right px-5 py-3 font-medium text-gray-500">Amount</th>
+            <th class="text-right px-5 py-3 font-medium text-gray-500">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (e of expenses(); track e.id) {
+            <tr class="hover:bg-gray-50 transition-colors">
+              <td class="px-5 py-3 text-gray-500 whitespace-nowrap">
+                {{ e.date | date: 'MMM d, y' }}
+              </td>
+              <td class="px-5 py-3 text-gray-900">{{ e.description || '—' }}</td>
+              <td class="px-5 py-3">
+                <span
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700"
+                >
+                  {{ e.category.icon }} {{ e.category.name }}
+                </span>
+              </td>
+              <td class="px-5 py-3 text-right font-semibold text-gray-900">
+                {{ e.amount | currency }}
+              </td>
+              <td class="px-5 py-3 text-right">
+                <button
+                  (click)="openEdit(e)"
+                  class="text-blue-500 hover:text-blue-700 mr-3 transition-colors"
+                >
+                  Edit
+                </button>
+                <button
+                  (click)="delete(e.id)"
+                  class="text-red-400 hover:text-red-600 transition-colors"
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      @if (totalPages > 1) {
+        <div class="flex items-center justify-between px-5 py-3 border-t border-gray-100">
+          <p class="text-sm text-gray-500">{{ total() }} total expenses</p>
+          <div class="flex gap-1">
+            @for (p of [].constructor(totalPages); track $index) {
+              <button
+                (click)="changePage($index + 1)"
+                class="w-8 h-8 rounded-lg text-sm transition-colors"
+                [class.bg-blue-600]="page() === $index + 1"
+                [class.text-white]="page() === $index + 1"
+                [class.text-gray-600]="page() !== $index + 1"
+                [class.hover:bg-gray-100]="page() !== $index + 1"
+              >
+                {{ $index + 1 }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- Modal Form -->
+@if (showForm()) {
+  <div
+    class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
+    (click)="showForm.set(false)"
+  >
+    <div
+      class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 fade-in"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-lg font-bold text-gray-900">
+          {{ editingId() ? 'Edit Expense' : 'Add Expense' }}
+        </h3>
+        <button (click)="showForm.set(false)" class="text-gray-400 hover:text-gray-600 text-xl">
+          ✕
+        </button>
+      </div>
+
+      <app-alert [message]="formError()" />
+
+      <form [formGroup]="form" (ngSubmit)="save()" class="space-y-4 mt-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
+            <input
+              type="number"
+              formControlName="amount"
+              placeholder="0.00"
+              step="0.01"
+              min="0.01"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              [class.border-red-400]="form.controls.amount.invalid && form.controls.amount.touched"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <input
+              type="date"
+              formControlName="date"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              [class.border-red-400]="form.controls.date.invalid && form.controls.date.touched"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+          <input
+            type="text"
+            formControlName="description"
+            placeholder="What did you spend on?"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <select
+            formControlName="categoryId"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            [class.border-red-400]="
+              form.controls.categoryId.invalid && form.controls.categoryId.touched
+            "
+          >
+            <option value="">Select category...</option>
+            @for (c of categories(); track c.id) {
+              <option [value]="c.id">{{ c.icon }} {{ c.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1"
+            >Link to Budget (optional)</label
+          >
+          <select
+            formControlName="budgetId"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">None</option>
+            @for (b of budgets(); track b.id) {
+              <option [value]="b.id">{{ b.category.icon }} {{ b.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button
+            type="button"
+            (click)="showForm.set(false)"
+            class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            [disabled]="saving()"
+            class="flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+          >
+            {{ saving() ? 'Saving...' : editingId() ? 'Update' : 'Add' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

@@ -1,0 +1,86 @@
+<div class="flex h-screen bg-gray-50 overflow-hidden">
+  <!-- Sidebar -->
+  <aside
+    class="flex flex-col bg-white border-r border-gray-200 transition-all duration-300"
+    [class.w-64]="sidebarOpen()"
+    [class.w-16]="!sidebarOpen()"
+  >
+    <!-- Logo -->
+    <div class="flex items-center h-16 px-4 border-b border-gray-200 shrink-0">
+      <span class="text-2xl">💼</span>
+      @if (sidebarOpen()) {
+        <span class="ml-3 font-bold text-gray-800 text-lg whitespace-nowrap">BudgetTracker</span>
+      }
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 py-4 overflow-y-auto">
+      @for (item of navItems; track item.route) {
+        @if (!item.adminOnly || auth.isAdmin()) {
+          <a
+            [routerLink]="item.route"
+            routerLinkActive="bg-blue-50 text-blue-700 border-r-2 border-blue-600"
+            class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          >
+            <span class="text-xl shrink-0">{{ item.icon }}</span>
+            @if (sidebarOpen()) {
+              <span class="ml-3 text-sm font-medium whitespace-nowrap">{{ item.label }}</span>
+            }
+          </a>
+        }
+      }
+    </nav>
+
+    <!-- User info at bottom -->
+    <div class="border-t border-gray-200 p-4 shrink-0">
+      @if (sidebarOpen()) {
+        <div class="mb-3">
+          <p class="text-sm font-medium text-gray-800 truncate">{{ auth.user()?.name }}</p>
+          <p class="text-xs text-gray-500 truncate">{{ auth.user()?.email }}</p>
+          @if (auth.isAdmin()) {
+            <span
+              class="inline-block mt-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full font-medium"
+              >Admin</span
+            >
+          }
+        </div>
+      }
+      <button
+        (click)="auth.logout()"
+        class="flex items-center text-gray-500 hover:text-red-600 transition-colors text-sm"
+      >
+        <span class="text-lg">🚪</span>
+        @if (sidebarOpen()) {
+          <span class="ml-2">Logout</span>
+        }
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <!-- Top bar -->
+    <header class="flex items-center h-16 px-6 bg-white border-b border-gray-200 shrink-0">
+      <button
+        (click)="sidebarOpen.set(!sidebarOpen())"
+        class="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors mr-4"
+        title="Toggle sidebar"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
+      </button>
+      <h1 class="text-lg font-semibold text-gray-800">Budget Tracker</h1>
+    </header>
+
+    <!-- Page content -->
+    <main class="flex-1 overflow-y-auto p-6">
+      <router-outlet />
+    </main>
+  </div>
+</div>
