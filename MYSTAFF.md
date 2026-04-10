@@ -1,4 +1,0 @@
-- DB: budget_tracker PostgreSQL migrated + seeded (admin@budget.com / Admin123!, demo@budget.com / User123!)
-- Swagger docs: http://localhost:3000/api/docs
-- Rate limiting: 100 req/min global
-- CORS: configured for Angular on :4200
