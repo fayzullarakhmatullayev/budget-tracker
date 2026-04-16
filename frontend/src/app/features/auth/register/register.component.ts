@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { AlertComponent } from '../../../shared/components/alert.component';
 
@@ -34,8 +33,8 @@ export class RegisterComponent {
     const { name, email, password } = this.form.value;
     this.auth.register(name!, email!, password!).subscribe({
       next: () => this.router.navigate(['/dashboard']),
-      error: (err: HttpErrorResponse) => {
-        this.error.set(err.error?.message ?? 'Registration failed.');
+      error: (err: any) => {
+        this.error.set(err?.error?.message ?? err?.message ?? 'Registration failed.');
         this.loading.set(false);
       },
     });

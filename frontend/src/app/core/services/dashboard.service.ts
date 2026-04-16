@@ -1,18 +1,24 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { from, Observable } from 'rxjs';
+import { SupabaseService } from './supabase.service';
 import { DashboardSummary } from '../models';
-import { environment } from '../../../environments/environment';
-
-const API = environment.apiUrl;
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
-  private http = inject(HttpClient);
+  private sb = inject(SupabaseService).client;
 
-  getSummary(month?: number, year?: number) {
-    let params = new HttpParams();
-    if (month) params = params.set('month', month);
-    if (year) params = params.set('year', year);
-    return this.http.get<DashboardSummary>(`${API}/dashboard/summary`, { params });
+  getSummary(month?: number, year?: number): Observable<DashboardSummary> {
+    const now = new Date();
+    const m = month ?? now.getMonth() + 1;
+    const y = year ?? now.getFullYear();
+
+    return from(
+      this.sb
+        .rpc('get_dashboard_summary', { p_month: m, p_year: y })
+        .then(({ data, error }) => {
+          if (error) throw { error: { message: error.message } };
+          return data as DashboardSummary;
+        }),
+    );
   }
 }

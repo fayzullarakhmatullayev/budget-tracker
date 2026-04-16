@@ -1,8 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { environment } from '../../../environments/environment';
-
-const API = environment.apiUrl;
+import { from, Observable } from 'rxjs';
+import { SupabaseService } from './supabase.service';
 
 export interface PlatformOverview {
   users: { total: number; newThisMonth: number; activeThisMonth: number };
@@ -37,26 +35,53 @@ export interface AdminUser {
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
-  private http = inject(HttpClient);
+  private sb = inject(SupabaseService).client;
 
-  getOverview() {
-    return this.http.get<PlatformOverview>(`${API}/admin/overview`);
-  }
-
-  getUsers(page = 1, limit = 10, search?: string) {
-    let params = new HttpParams().set('page', page).set('limit', limit);
-    if (search) params = params.set('search', search);
-    return this.http.get<{ data: AdminUser[]; total: number; page: number; limit: number }>(
-      `${API}/admin/users`,
-      { params },
+  getOverview(): Observable<PlatformOverview> {
+    return from(
+      this.sb
+        .rpc('get_admin_overview')
+        .then(({ data, error }) => {
+          if (error) throw { error: { message: error.message } };
+          return data as PlatformOverview;
+        }),
     );
   }
 
-  updateRole(userId: string, role: 'ADMIN' | 'USER') {
-    return this.http.patch(`${API}/admin/users/${userId}/role`, { role });
+  getUsers(
+    page = 1,
+    limit = 10,
+    search?: string,
+  ): Observable<{ data: AdminUser[]; total: number; page: number; limit: number }> {
+    return from(
+      this.sb
+        .rpc('get_admin_users', { p_page: page, p_limit: limit, p_search: search ?? null })
+        .then(({ data, error }) => {
+          if (error) throw { error: { message: error.message } };
+          return data as { data: AdminUser[]; total: number; page: number; limit: number };
+        }),
+    );
   }
 
-  deleteUser(userId: string) {
-    return this.http.delete(`${API}/admin/users/${userId}`);
+  updateRole(userId: string, role: 'ADMIN' | 'USER'): Observable<unknown> {
+    return from(
+      this.sb
+        .rpc('admin_update_user_role', { p_user_id: userId, p_role: role })
+        .then(({ data, error }) => {
+          if (error) throw { error: { message: error.message } };
+          return data;
+        }),
+    );
+  }
+
+  deleteUser(userId: string): Observable<unknown> {
+    return from(
+      this.sb
+        .rpc('admin_delete_user', { p_user_id: userId })
+        .then(({ error }) => {
+          if (error) throw { error: { message: error.message } };
+          return { message: 'User deleted' };
+        }),
+    );
   }
 }

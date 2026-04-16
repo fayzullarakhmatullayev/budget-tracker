@@ -1,51 +1,9 @@
 version: '3.8'
 
+# Database and backend are now fully managed by Supabase.
+# This file only runs the Angular frontend container.
+
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: budget_tracker_db
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: budget_tracker
-    ports:
-      - '5432:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: budget_tracker_pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@budget.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    ports:
-      - '5050:80'
-    depends_on:
-      - db
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: budget_tracker_backend
-    env_file: ./backend/.env
-    environment:
-      DATABASE_URL: postgresql://postgres:admin@db:5432/budget_tracker
-    ports:
-      - '3000:3000'
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-
   frontend:
     build:
       context: ./frontend
@@ -53,8 +11,3 @@ services:
     container_name: budget_tracker_frontend
     ports:
       - '4200:80'
-    depends_on:
-      - backend
-
-volumes:
-  postgres_data:

@@ -1,7 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { AlertComponent } from '../../../shared/components/alert.component';
 
@@ -33,8 +32,8 @@ export class LoginComponent {
     const { email, password } = this.form.value;
     this.auth.login(email!, password!).subscribe({
       next: () => this.router.navigate(['/dashboard']),
-      error: (err: HttpErrorResponse) => {
-        this.error.set(err.error?.message ?? 'Login failed. Please try again.');
+      error: (err: any) => {
+        this.error.set(err?.error?.message ?? err?.message ?? 'Login failed. Please try again.');
         this.loading.set(false);
       },
     });
