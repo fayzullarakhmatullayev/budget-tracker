@@ -6,7 +6,7 @@
  * CI / deploy: set SUPABASE_URL and SUPABASE_ANON_KEY as environment variables
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -37,6 +37,7 @@ if (!url || !key) {
 }
 
 const envDir = join(__dirname, 'src/environments');
+mkdirSync(envDir, { recursive: true });
 
 writeFileSync(
   join(envDir, 'environment.ts'),
