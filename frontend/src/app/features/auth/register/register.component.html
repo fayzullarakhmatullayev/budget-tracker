@@ -2,77 +2,100 @@
   class="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 px-4"
 >
   <div class="w-full max-w-md">
-    <div class="bg-white rounded-2xl shadow-xl p-8 fade-in">
-      <div class="text-center mb-8">
-        <div class="text-5xl mb-3">💼</div>
-        <h1 class="text-2xl font-bold text-gray-900">Create account</h1>
-        <p class="text-gray-500 mt-1 text-sm">Start tracking your budget today</p>
-      </div>
 
-      <app-alert [message]="error()" />
-
-      <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5 mt-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-          <input
-            type="text"
-            formControlName="name"
-            placeholder="John Doe"
-            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
-          />
-          @if (form.controls.name.invalid && form.controls.name.touched) {
-            <p class="text-red-500 text-xs mt-1">Name must be at least 2 characters</p>
-          }
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input
-            type="email"
-            formControlName="email"
-            placeholder="you@example.com"
-            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            [class.border-red-400]="form.controls.email.invalid && form.controls.email.touched"
-          />
-          @if (form.controls.email.invalid && form.controls.email.touched) {
-            <p class="text-red-500 text-xs mt-1">Enter a valid email address</p>
-          }
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-          <input
-            type="password"
-            formControlName="password"
-            placeholder="••••••••"
-            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            [class.border-red-400]="
-              form.controls.password.invalid && form.controls.password.touched
-            "
-          />
-          @if (form.controls.password.invalid && form.controls.password.touched) {
-            <p class="text-red-500 text-xs mt-1">Password must be at least 8 characters</p>
-          }
-        </div>
-
-        <button
-          type="submit"
-          [disabled]="loading()"
-          class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg transition-colors text-sm"
+    @if (success()) {
+      <div class="bg-white rounded-2xl shadow-xl p-8 text-center fade-in">
+        <div class="text-6xl mb-4">📧</div>
+        <h1 class="text-2xl font-bold text-gray-900 mb-2">Check your email</h1>
+        <p class="text-gray-500 text-sm mb-1">
+          We sent a confirmation link to
+        </p>
+        <p class="text-blue-600 font-medium text-sm mb-6">{{ form.value.email }}</p>
+        <p class="text-gray-400 text-xs mb-6">
+          Click the link in the email to activate your account.<br />
+          Redirecting to login in a moment...
+        </p>
+        <a
+          routerLink="/auth/login"
+          class="inline-block w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-sm text-center"
         >
-          @if (loading()) {
-            Creating account...
-          } @else {
-            Create Account
-          }
-        </button>
-      </form>
+          Go to Login
+        </a>
+      </div>
+    } @else {
+      <div class="bg-white rounded-2xl shadow-xl p-8 fade-in">
+        <div class="text-center mb-8">
+          <div class="text-5xl mb-3">💼</div>
+          <h1 class="text-2xl font-bold text-gray-900">Create account</h1>
+          <p class="text-gray-500 mt-1 text-sm">Start tracking your budget today</p>
+        </div>
 
-      <p class="text-center text-sm text-gray-500 mt-6">
-        Already have an account?
-        <a routerLink="/auth/login" class="text-blue-600 hover:underline font-medium">Sign in</a>
-      </p>
-    </div>
+        <app-alert [message]="error()" />
+
+        <form [formGroup]="form" (ngSubmit)="submit()" class="space-y-5 mt-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <input
+              type="text"
+              formControlName="name"
+              placeholder="John Doe"
+              class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
+            />
+            @if (form.controls.name.invalid && form.controls.name.touched) {
+              <p class="text-red-500 text-xs mt-1">Name must be at least 2 characters</p>
+            }
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              formControlName="email"
+              placeholder="you@example.com"
+              class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              [class.border-red-400]="form.controls.email.invalid && form.controls.email.touched"
+            />
+            @if (form.controls.email.invalid && form.controls.email.touched) {
+              <p class="text-red-500 text-xs mt-1">Enter a valid email address</p>
+            }
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input
+              type="password"
+              formControlName="password"
+              placeholder="••••••••"
+              class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              [class.border-red-400]="
+                form.controls.password.invalid && form.controls.password.touched
+              "
+            />
+            @if (form.controls.password.invalid && form.controls.password.touched) {
+              <p class="text-red-500 text-xs mt-1">Password must be at least 8 characters</p>
+            }
+          </div>
+
+          <button
+            type="submit"
+            [disabled]="loading()"
+            class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-lg transition-colors text-sm"
+          >
+            @if (loading()) {
+              Creating account...
+            } @else {
+              Create Account
+            }
+          </button>
+        </form>
+
+        <p class="text-center text-sm text-gray-500 mt-6">
+          Already have an account?
+          <a routerLink="/auth/login" class="text-blue-600 hover:underline font-medium">Sign in</a>
+        </p>
+      </div>
+    }
+
   </div>
 </div>

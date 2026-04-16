@@ -16,6 +16,7 @@ export class RegisterComponent {
 
   loading = signal(false);
   error = signal('');
+  success = signal(false);
 
   form = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -32,7 +33,11 @@ export class RegisterComponent {
     this.error.set('');
     const { name, email, password } = this.form.value;
     this.auth.register(name!, email!, password!).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
+      next: () => {
+        this.success.set(true);
+        this.loading.set(false);
+        setTimeout(() => this.router.navigate(['/auth/login']), 4000);
+      },
       error: (err: any) => {
         this.error.set(err?.error?.message ?? err?.message ?? 'Registration failed.');
         this.loading.set(false);
