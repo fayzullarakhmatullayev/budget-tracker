@@ -1,0 +1,13 @@
+[build]
+  base    = "frontend"
+  command = "npm run build -- --configuration production"
+  publish = "dist/frontend/browser"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Angular SPA — send all routes to index.html
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
