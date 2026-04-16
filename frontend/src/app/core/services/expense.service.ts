@@ -72,21 +72,24 @@ export class ExpenseService {
 
   create(payload: ExpensePayload): Observable<Expense> {
     return from(
-      this.sb
-        .from('expenses')
-        .insert({
-          amount: payload.amount,
-          description: payload.description,
-          date: payload.date,
-          category_id: payload.categoryId,
-          budget_id: payload.budgetId ?? null,
-        })
-        .select(EXPENSE_SELECT)
-        .single()
-        .then(({ data, error }) => {
-          if (error) throw { error: { message: error.message } };
-          return this.mapExpense(data);
-        }),
+      (async () => {
+        const { data: { session } } = await this.sb.auth.getSession();
+        if (!session) throw { error: { message: 'Not authenticated' } };
+        const { data, error } = await this.sb
+          .from('expenses')
+          .insert({
+            amount: payload.amount,
+            description: payload.description,
+            date: payload.date,
+            category_id: payload.categoryId,
+            budget_id: payload.budgetId ?? null,
+            user_id: session.user.id,
+          })
+          .select(EXPENSE_SELECT)
+          .single();
+        if (error) throw { error: { message: error.message } };
+        return this.mapExpense(data);
+      })(),
     );
   }
 

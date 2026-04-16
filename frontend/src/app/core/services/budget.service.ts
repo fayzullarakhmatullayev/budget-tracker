@@ -69,21 +69,24 @@ export class BudgetService {
 
   create(payload: BudgetPayload): Observable<Budget> {
     return from(
-      this.sb
-        .from('budgets')
-        .insert({
-          name: payload.name,
-          monthly_limit: payload.monthlyLimit,
-          month: payload.month,
-          year: payload.year,
-          category_id: payload.categoryId,
-        })
-        .select('*, category:categories(*), expenses(amount)')
-        .single()
-        .then(({ data, error }) => {
-          if (error) throw { error: { message: error.message } };
-          return this.mapBudget(data);
-        }),
+      (async () => {
+        const { data: { session } } = await this.sb.auth.getSession();
+        if (!session) throw { error: { message: 'Not authenticated' } };
+        const { data, error } = await this.sb
+          .from('budgets')
+          .insert({
+            name: payload.name,
+            monthly_limit: payload.monthlyLimit,
+            month: payload.month,
+            year: payload.year,
+            category_id: payload.categoryId,
+            user_id: session.user.id,
+          })
+          .select('*, category:categories(*), expenses(amount)')
+          .single();
+        if (error) throw { error: { message: error.message } };
+        return this.mapBudget(data);
+      })(),
     );
   }
 
