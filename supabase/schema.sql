@@ -95,26 +95,29 @@ ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budgets    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expenses   ENABLE ROW LEVEL SECURITY;
 
+-- is_admin(): SECURITY DEFINER so it bypasses RLS when querying profiles,
+-- preventing infinite recursion in policies that check admin status.
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'ADMIN');
+$$;
+
 -- profiles
-CREATE POLICY "profiles_select_own"    ON public.profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "profiles_update_own"    ON public.profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "profiles_admin_select"  ON public.profiles FOR SELECT
-  USING (EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'ADMIN'));
+CREATE POLICY "profiles_select"     ON public.profiles FOR SELECT USING (auth.uid() = id OR public.is_admin());
+CREATE POLICY "profiles_update_own" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
 -- categories: all authenticated users read; only admins write
 CREATE POLICY "categories_select_auth" ON public.categories FOR SELECT TO authenticated USING (true);
-CREATE POLICY "categories_write_admin" ON public.categories FOR ALL
-  USING (EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'ADMIN'));
+CREATE POLICY "categories_write_admin" ON public.categories FOR ALL USING (public.is_admin());
 
 -- budgets
-CREATE POLICY "budgets_own"           ON public.budgets FOR ALL   USING (user_id = auth.uid());
-CREATE POLICY "budgets_admin_select"  ON public.budgets FOR SELECT
-  USING (EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'ADMIN'));
+CREATE POLICY "budgets_own"          ON public.budgets FOR ALL    USING (user_id = auth.uid());
+CREATE POLICY "budgets_admin_select" ON public.budgets FOR SELECT USING (public.is_admin());
 
 -- expenses
-CREATE POLICY "expenses_own"          ON public.expenses FOR ALL   USING (user_id = auth.uid());
-CREATE POLICY "expenses_admin_select" ON public.expenses FOR SELECT
-  USING (EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND p.role = 'ADMIN'));
+CREATE POLICY "expenses_own"          ON public.expenses FOR ALL    USING (user_id = auth.uid());
+CREATE POLICY "expenses_admin_select" ON public.expenses FOR SELECT USING (public.is_admin());
 
 -- ── Helper: assert caller is admin ───────────────────────────────────────
 
