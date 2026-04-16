@@ -104,18 +104,28 @@ SET search_path = public AS $$
 $$;
 
 -- profiles
+DROP POLICY IF EXISTS "profiles_select_own"    ON public.profiles;
+DROP POLICY IF EXISTS "profiles_admin_select"  ON public.profiles;
+DROP POLICY IF EXISTS "profiles_select"        ON public.profiles;
+DROP POLICY IF EXISTS "profiles_update_own"    ON public.profiles;
 CREATE POLICY "profiles_select"     ON public.profiles FOR SELECT USING (auth.uid() = id OR public.is_admin());
 CREATE POLICY "profiles_update_own" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
 -- categories: all authenticated users read; only admins write
+DROP POLICY IF EXISTS "categories_select_auth" ON public.categories;
+DROP POLICY IF EXISTS "categories_write_admin" ON public.categories;
 CREATE POLICY "categories_select_auth" ON public.categories FOR SELECT TO authenticated USING (true);
 CREATE POLICY "categories_write_admin" ON public.categories FOR ALL USING (public.is_admin());
 
 -- budgets
+DROP POLICY IF EXISTS "budgets_own"          ON public.budgets;
+DROP POLICY IF EXISTS "budgets_admin_select" ON public.budgets;
 CREATE POLICY "budgets_own"          ON public.budgets FOR ALL    USING (user_id = auth.uid());
 CREATE POLICY "budgets_admin_select" ON public.budgets FOR SELECT USING (public.is_admin());
 
 -- expenses
+DROP POLICY IF EXISTS "expenses_own"          ON public.expenses;
+DROP POLICY IF EXISTS "expenses_admin_select" ON public.expenses;
 CREATE POLICY "expenses_own"          ON public.expenses FOR ALL    USING (user_id = auth.uid());
 CREATE POLICY "expenses_admin_select" ON public.expenses FOR SELECT USING (public.is_admin());
 
