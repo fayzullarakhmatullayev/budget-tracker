@@ -8,7 +8,8 @@
     "prebuild": "node set-env.mjs",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "build:full": "node set-env.mjs && ng build --configuration production"
   },
   "prettier": {
     "printWidth": 100,
