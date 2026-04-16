@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/projects/Budget Tracker/backend/src/auth/**)",
+      "Bash(npm install *)"
+    ]
+  }
+}
